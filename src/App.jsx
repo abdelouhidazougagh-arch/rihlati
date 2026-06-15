@@ -1,510 +1,392 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from "react";
 
-// ===== LANGUAGES =====
-const LANGS = {
-  es: { label: 'ES', dir: 'ltr' },
-  en: { label: 'EN', dir: 'ltr' },
-  ar: { label: 'AR', dir: 'rtl' },
-}
+const airports = [
+  { code: "MAD", name: "Madrid Barajas", city: "Madrid", country: "España" },
+  { code: "BCN", name: "Barcelona El Prat", city: "Barcelona", country: "España" },
+  { code: "CMN", name: "Mohammed V", city: "Casablanca", country: "Marruecos" },
+  { code: "RAK", name: "Menara", city: "Marrakech", country: "Marruecos" },
+  { code: "FEZ", name: "Saïs", city: "Fez", country: "Marruecos" },
+  { code: "TNG", name: "Ibn Battuta", city: "Tánger", country: "Marruecos" },
+  { code: "OUD", name: "Angads", city: "Oujda", country: "Marruecos" },
+  { code: "AGA", name: "Al Massira", city: "Agadir", country: "Marruecos" },
+  { code: "NDR", name: "Aroport Al Hoceima", city: "Al Hoceima", country: "Marruecos" },
+  { code: "LHR", name: "Heathrow", city: "Londres", country: "Reino Unido" },
+  { code: "CDG", name: "Charles de Gaulle", city: "París", country: "Francia" },
+  { code: "AMS", name: "Schiphol", city: "Ámsterdam", country: "Países Bajos" },
+  { code: "FCO", name: "Fiumicino", city: "Roma", country: "Italia" },
+  { code: "DXB", name: "Dubai Int'l", city: "Dubái", country: "EAU" },
+  { code: "IST", name: "Istanbul", city: "Estambul", country: "Turquía" },
+  { code: "CAI", name: "Cairo Int'l", city: "El Cairo", country: "Egipto" },
+  { code: "ALG", name: "Houari Boumediene", city: "Argel", country: "Argelia" },
+  { code: "TUN", name: "Tunis Carthage", city: "Túnez", country: "Túnez" },
+  { code: "JFK", name: "John F. Kennedy", city: "Nueva York", country: "EE.UU." },
+  { code: "MXP", name: "Malpensa", city: "Milán", country: "Italia" },
+  { code: "BRU", name: "Brussels Airport", city: "Bruselas", country: "Bélgica" },
+  { code: "VLC", name: "Valencia", city: "Valencia", country: "España" },
+  { code: "SVQ", name: "Sevilla", city: "Sevilla", country: "España" },
+  { code: "AGP", name: "Málaga Costa del Sol", city: "Málaga", country: "España" },
+  { code: "BIO", name: "Bilbao", city: "Bilbao", country: "España" },
+];
 
-const DEFAULT_LANG = 'es'
+const deals = [
+  { from: "MAD", to: "CMN", price: 49, airline: "Royal Air Maroc", duration: "2h 15m" },
+  { from: "MAD", to: "RAK", price: 65, airline: "Ryanair", duration: "2h 30m" },
+  { from: "BCN", to: "CMN", price: 55, airline: "Vueling", duration: "2h 20m" },
+  { from: "MAD", to: "DXB", price: 189, airline: "Emirates", duration: "6h 45m" },
+  { from: "MAD", to: "LHR", price: 79, airline: "Iberia", duration: "2h 05m" },
+  { from: "BCN", to: "CDG", price: 39, airline: "Vueling", duration: "1h 50m" },
+];
 
-// ===== AIRPORTS =====
-const AIRPORTS = [
-  { code: 'MAD', name: { ar: 'مدريد', es: 'Madrid', en: 'Madrid' } },
-  { code: 'BCN', name: { ar: 'برشلونة', es: 'Barcelona', en: 'Barcelona' } },
-  { code: 'CMN', name: { ar: 'الدار البيضاء', es: 'Casablanca', en: 'Casablanca' } },
-  { code: 'RAK', name: { ar: 'مراكش', es: 'Marrakech', en: 'Marrakech' } },
-  { code: 'TNG', name: { ar: 'طنجة', es: 'Tánger', en: 'Tangier' } },
-  { code: 'ALG', name: { ar: 'الجزائر', es: 'Argel', en: 'Algiers' } },
-  { code: 'TUN', name: { ar: 'تونس', es: 'Túnez', en: 'Tunis' } },
-  { code: 'CAI', name: { ar: 'القاهرة', es: 'El Cairo', en: 'Cairo' } },
-  { code: 'DXB', name: { ar: 'دبي', es: 'Dubái', en: 'Dubai' } },
-  { code: 'CDG', name: { ar: 'باريس', es: 'París', en: 'Paris' } },
-  { code: 'LHR', name: { ar: 'لندن', es: 'Londres', en: 'London' } },
-  { code: 'AMS', name: { ar: 'أمستردام', es: 'Ámsterdam', en: 'Amsterdam' } },
-]
-
-// ===== MOCK FLIGHTS (durationMin in minutes) =====
-const MOCK_FLIGHTS = [
-  { id: 1, airline: 'Royal Air Maroc', from: 'MAD', to: 'CMN', dep: '08:30', arr: '10:15', durationMin: 105, price: 89, stops: 0 },
-  { id: 2, airline: 'Ryanair', from: 'MAD', to: 'CMN', dep: '14:00', arr: '16:00', durationMin: 120, price: 65, stops: 0 },
-  { id: 3, airline: 'Iberia', from: 'MAD', to: 'CMN', dep: '19:45', arr: '22:30', durationMin: 165, price: 112, stops: 1 },
-  { id: 4, airline: 'Vueling', from: 'BCN', to: 'CMN', dep: '07:00', arr: '09:00', durationMin: 120, price: 78, stops: 0 },
-  { id: 5, airline: 'Air Arabia', from: 'MAD', to: 'RAK', dep: '11:20', arr: '13:30', durationMin: 130, price: 55, stops: 0 },
-]
-
-// ===== TRANSLATIONS =====
 const translations = {
   es: {
-    brand: 'Rihlati',
-    tagline: 'Vuelos al mejor precio',
-    heroTitle: 'Viaja al mejor precio',
-    heroSub: 'Vuelos desde España a Marruecos y el mundo',
-    oneWay: 'Solo ida',
-    roundTrip: 'Ida y vuelta',
-    from: 'Origen',
-    to: 'Destino',
-    selectAirport: 'Selecciona aeropuerto',
-    departureDate: 'Fecha de ida',
-    returnDate: 'Fecha de vuelta',
-    passengers: 'Pasajeros',
-    searchBtn: '🔍 Buscar vuelos',
-    searching: '⏳ Buscando...',
-    featureSupport: 'Soporte multilingüe',
-    featurePrices: 'Precios fiables',
-    featureBooking: 'Reserva rápida',
-    back: '← Volver',
-    flightsAvailable: (n) => `${n} vuelos disponibles`,
-    direct: 'Directo',
-    stop: (n) => `${n} escala${n > 1 ? 's' : ''}`,
-    select: 'Elegir',
-    flightDetails: 'Detalles del vuelo',
-    ticketPrice: 'Precio del billete',
-    passengersCount: 'Número de pasajeros',
-    total: 'Total',
-    infoText: '📋 El equipo de Rihlati te contactará por WhatsApp para completar el pago y enviarte los billetes.',
-    bookBtn: (total) => `📱 Reservar por WhatsApp — ${total} €`,
-    confirmTitle: '¡Solicitud enviada!',
-    confirmText: 'El equipo de Rihlati te contactará por WhatsApp en pocos minutos para completar la reserva y el pago.',
-    whatsappBtn: '📱 Contactar por WhatsApp',
-    newSearchBtn: '🔍 Nueva búsqueda',
-    passengerWord: (n) => (n === 1 ? 'pasajero' : 'pasajeros'),
-    h: 'h', m: 'min',
+    tagline: "Vuela más lejos por menos",
+    subtitle: "Compara millones de vuelos y encuentra el mejor precio",
+    from: "Origen",
+    to: "Destino",
+    departure: "Ida",
+    returnDate: "Vuelta",
+    passengers: "Pasajeros",
+    oneWay: "Solo ida",
+    roundTrip: "Ida y vuelta",
+    search: "Buscar vuelos",
+    deals: "Ofertas de la semana",
+    adult: "Adulto",
+    adults: "Adultos",
+    searchPlaceholder: "Ciudad o aeropuerto",
+    from2: "desde",
+    book: "Ver oferta",
+    hotels: "Hoteles",
+    cars: "Coches",
+    ferries: "Ferries",
+    flights: "Vuelos",
   },
   en: {
-    brand: 'Rihlati',
-    tagline: 'Affordable flight tickets',
-    heroTitle: 'Travel for less',
-    heroSub: 'Flights from Spain to Morocco and the world',
-    oneWay: 'One way',
-    roundTrip: 'Round trip',
-    from: 'From',
-    to: 'To',
-    selectAirport: 'Select airport',
-    departureDate: 'Departure date',
-    returnDate: 'Return date',
-    passengers: 'Passengers',
-    searchBtn: '🔍 Search flights',
-    searching: '⏳ Searching...',
-    featureSupport: 'Multilingual support',
-    featurePrices: 'Trusted prices',
-    featureBooking: 'Fast booking',
-    back: '← Back',
-    flightsAvailable: (n) => `${n} flights available`,
-    direct: 'Direct',
-    stop: (n) => `${n} stop${n > 1 ? 's' : ''}`,
-    select: 'Select',
-    flightDetails: 'Flight details',
-    ticketPrice: 'Ticket price',
-    passengersCount: 'Number of passengers',
-    total: 'Total',
-    infoText: '📋 The Rihlati team will contact you on WhatsApp to complete payment and send your tickets.',
-    bookBtn: (total) => `📱 Book via WhatsApp — ${total} €`,
-    confirmTitle: 'Request sent!',
-    confirmText: 'The Rihlati team will contact you on WhatsApp within minutes to complete the booking and payment.',
-    whatsappBtn: '📱 Contact via WhatsApp',
-    newSearchBtn: '🔍 New search',
-    passengerWord: (n) => (n === 1 ? 'passenger' : 'passengers'),
-    h: 'h', m: 'm',
+    tagline: "Fly further for less",
+    subtitle: "Compare millions of flights and find the best price",
+    from: "From",
+    to: "To",
+    departure: "Departure",
+    returnDate: "Return",
+    passengers: "Passengers",
+    oneWay: "One way",
+    roundTrip: "Round trip",
+    search: "Search flights",
+    deals: "Deals of the week",
+    adult: "Adult",
+    adults: "Adults",
+    searchPlaceholder: "City or airport",
+    from2: "from",
+    book: "See deal",
+    hotels: "Hotels",
+    cars: "Cars",
+    ferries: "Ferries",
+    flights: "Flights",
   },
   ar: {
-    brand: 'Rihlati',
-    tagline: 'تذاكر طيران بأسعار مناسبة',
-    heroTitle: 'سافر بسعر أفضل',
-    heroSub: 'رحلات من إسبانيا إلى المغرب والعالم',
-    oneWay: 'ذهاب فقط',
-    roundTrip: 'ذهاب وعودة',
-    from: 'من',
-    to: 'إلى',
-    selectAirport: 'اختر المطار',
-    departureDate: 'تاريخ الذهاب',
-    returnDate: 'تاريخ العودة',
-    passengers: 'الركاب',
-    searchBtn: '🔍 ابحث عن رحلات',
-    searching: '⏳ جاري البحث...',
-    featureSupport: 'دعم بعدة لغات',
-    featurePrices: 'أسعار موثوقة',
-    featureBooking: 'حجز سريع',
-    back: '← رجوع',
-    flightsAvailable: (n) => `${n} رحلة متاحة`,
-    direct: 'مباشر',
-    stop: (n) => `${n} توقف`,
-    select: 'اختر',
-    flightDetails: 'تفاصيل الرحلة',
-    ticketPrice: 'سعر التذكرة',
-    passengersCount: 'عدد الركاب',
-    total: 'المجموع',
-    infoText: '📋 سيتواصل معك فريق Rihlati عبر واتساب لإتمام الدفع وإرسال التذاكر.',
-    bookBtn: (total) => `📱 احجز عبر واتساب — ${total} €`,
-    confirmTitle: 'تم إرسال طلبك!',
-    confirmText: 'سيتواصل معك فريق Rihlati عبر واتساب خلال دقائق لإتمام الحجز والدفع.',
-    whatsappBtn: '📱 تواصل عبر واتساب',
-    newSearchBtn: '🔍 بحث جديد',
-    passengerWord: (n) => (n === 1 ? 'راكب' : 'ركاب'),
-    h: 'س', m: 'د',
+    tagline: "سافر أبعد بأقل تكلفة",
+    subtitle: "قارن ملايين الرحلات وابحث عن أفضل سعر",
+    from: "من",
+    to: "إلى",
+    departure: "المغادرة",
+    returnDate: "العودة",
+    passengers: "الركاب",
+    oneWay: "ذهاب فقط",
+    roundTrip: "ذهاب وعودة",
+    search: "ابحث عن رحلات",
+    deals: "عروض الأسبوع",
+    adult: "بالغ",
+    adults: "بالغون",
+    searchPlaceholder: "مدينة أو مطار",
+    from2: "من",
+    book: "عرض الصفقة",
+    hotels: "فنادق",
+    cars: "سيارات",
+    ferries: "عبّارات",
+    flights: "رحلات",
   },
-}
+};
 
-const formatDuration = (min, t) => {
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  return `${h}${t.h} ${m}${t.m}`
-}
+function AirportSearch({ label, value, onChange, placeholder, lang }) {
+  const [query, setQuery] = useState(value ? `${value.city} (${value.code})` : "");
+  const [results, setResults] = useState([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
 
-export default function App() {
-  const [lang, setLang] = useState(DEFAULT_LANG)
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
-  const [date, setDate] = useState('')
-  const [passengers, setPassengers] = useState(1)
-  const [tripType, setTripType] = useState('oneWay')
-  const [returnDate, setReturnDate] = useState('')
-  const [results, setResults] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [selectedFlight, setSelectedFlight] = useState(null)
-  const [page, setPage] = useState('home')
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
-  const t = translations[lang]
-  const dir = LANGS[lang].dir
-  const today = new Date().toISOString().split('T')[0]
+  const handleChange = (e) => {
+    const q = e.target.value;
+    setQuery(q);
+    if (q.length < 1) { setResults([]); setOpen(false); return; }
+    const filtered = airports.filter(a =>
+      a.city.toLowerCase().includes(q.toLowerCase()) ||
+      a.code.toLowerCase().includes(q.toLowerCase()) ||
+      a.country.toLowerCase().includes(q.toLowerCase()) ||
+      a.name.toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 6);
+    setResults(filtered);
+    setOpen(true);
+  };
 
-  const swap = () => {
-    const tmp = from
-    setFrom(to)
-    setTo(tmp)
-  }
+  const select = (airport) => {
+    onChange(airport);
+    setQuery(`${airport.city} (${airport.code})`);
+    setOpen(false);
+    setResults([]);
+  };
 
-  const search = () => {
-    if (!from || !to || !date) return
-    setLoading(true)
-    setTimeout(() => {
-      const filtered = MOCK_FLIGHTS.filter(f =>
-        (f.from === from && f.to === to) ||
-        (f.from === from) ||
-        (f.to === to)
-      )
-      setResults(filtered.length > 0 ? filtered : MOCK_FLIGHTS.slice(0, 3))
-      setLoading(false)
-      setPage('results')
-    }, 1500)
-  }
-
-  const selectFlight = (flight) => {
-    setSelectedFlight(flight)
-    setPage('booking')
-  }
-
-  const getAirportName = (code) => AIRPORTS.find(a => a.code === code)?.name[lang] || code
-
-  // ===== LANGUAGE SWITCHER =====
-  const LangSwitcher = () => (
-    <div style={styles.langSwitcher}>
-      {Object.keys(LANGS).map(code => (
-        <button
-          key={code}
-          onClick={() => setLang(code)}
-          style={lang === code ? styles.langBtnActive : styles.langBtn}
-        >
-          {LANGS[code].label}
-        </button>
-      ))}
-    </div>
-  )
-
-  const Logo = () => (
-    <div style={styles.logoWrap}>
-      <span style={styles.logoIcon}>✈</span>
-      <span style={styles.logo}>{t.brand}</span>
-    </div>
-  )
-
-  // ===== PAGES =====
-
-  if (page === 'confirm') {
-    return (
-      <div style={{ ...styles.page, direction: dir }}>
-        <div style={styles.confirmBox}>
-          <div style={styles.checkIcon}>✓</div>
-          <h2 style={styles.confirmTitle}>{t.confirmTitle}</h2>
-          <p style={styles.confirmText}>{t.confirmText}</p>
-          <div style={{ ...styles.confirmDetails, textAlign: dir === 'rtl' ? 'right' : 'left' }}>
-            <p>✈️ {getAirportName(selectedFlight?.from)} → {getAirportName(selectedFlight?.to)}</p>
-            <p>🏢 {selectedFlight?.airline}</p>
-            <p>💰 {selectedFlight?.price * passengers} € — {passengers} {t.passengerWord(passengers)}</p>
-          </div>
-          <button style={styles.whatsappBtn} onClick={() => window.open('https://wa.me/34600000000', '_blank')}>
-            {t.whatsappBtn}
-          </button>
-          <button style={{ ...styles.secondBtn, marginTop: 12 }} onClick={() => { setPage('home'); setResults(null); setSelectedFlight(null) }}>
-            {t.newSearchBtn}
-          </button>
-        </div>
+  return (
+    <div ref={ref} style={{ position: "relative", flex: 1 }}>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+        {label}
+      </label>
+      <div style={{ display: "flex", alignItems: "center", background: "white", border: "2px solid #e2e8f0", borderRadius: 12, padding: "12px 16px", gap: 10, transition: "border-color 0.2s" }}
+        onFocus={() => {}} >
+        <span style={{ fontSize: 18 }}>✈️</span>
+        <input
+          value={query}
+          onChange={handleChange}
+          onFocus={() => query.length > 0 && setOpen(true)}
+          placeholder={placeholder}
+          style={{ border: "none", outline: "none", flex: 1, fontSize: 15, color: "#1e293b", background: "transparent", fontFamily: "inherit" }}
+        />
       </div>
-    )
-  }
-
-  if (page === 'booking' && selectedFlight) {
-    const total = selectedFlight.price * passengers
-    return (
-      <div style={{ ...styles.page, direction: dir }}>
-        <header style={styles.header}>
-          <button style={styles.backBtn} onClick={() => setPage('results')}>{t.back}</button>
-          <Logo />
-          <LangSwitcher />
-        </header>
-        <div style={styles.bookingContainer}>
-          <h2 style={styles.sectionTitle}>{t.flightDetails}</h2>
-          <div style={styles.flightCard}>
-            <div style={styles.flightRow}>
-              <div style={styles.flightPoint}>
-                <span style={styles.flightTime}>{selectedFlight.dep}</span>
-                <span style={styles.flightCode}>{selectedFlight.from}</span>
-                <span style={styles.flightCity}>{getAirportName(selectedFlight.from)}</span>
+      {open && results.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", zIndex: 1000, overflow: "hidden", marginTop: 4 }}>
+          {results.map(a => (
+            <div key={a.code} onClick={() => select(a)}
+              style={{ padding: "12px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+              onMouseLeave={e => e.currentTarget.style.background = "white"}>
+              <div>
+                <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14 }}>{a.city}</div>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>{a.name} · {a.country}</div>
               </div>
-              <div style={styles.flightMiddle}>
-                <span style={styles.flightDuration}>{formatDuration(selectedFlight.durationMin, t)}</span>
-                <div style={styles.flightLine}><span style={styles.planIcon}>✈</span></div>
-                <span style={styles.stopsText}>{selectedFlight.stops === 0 ? t.direct : t.stop(selectedFlight.stops)}</span>
-              </div>
-              <div style={styles.flightPoint}>
-                <span style={styles.flightTime}>{selectedFlight.arr}</span>
-                <span style={styles.flightCode}>{selectedFlight.to}</span>
-                <span style={styles.flightCity}>{getAirportName(selectedFlight.to)}</span>
-              </div>
-            </div>
-            <div style={styles.airlineRow}>
-              <span>🏢 {selectedFlight.airline}</span>
-            </div>
-          </div>
-
-          <div style={styles.priceBox}>
-            <div style={styles.priceRow}><span>{t.ticketPrice}</span><span>{selectedFlight.price} €</span></div>
-            <div style={styles.priceRow}><span>{t.passengersCount}</span><span>{passengers}</span></div>
-            <div style={styles.totalRow}><span>{t.total}</span><span style={styles.totalPrice}>{total} €</span></div>
-          </div>
-
-          <div style={styles.infoBox}>
-            <p style={styles.infoText}>{t.infoText}</p>
-          </div>
-
-          <button style={styles.bookBtn} onClick={() => setPage('confirm')}>
-            {t.bookBtn(total)}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (page === 'results') {
-    return (
-      <div style={{ ...styles.page, direction: dir }}>
-        <header style={styles.header}>
-          <button style={styles.backBtn} onClick={() => setPage('home')}>{t.back}</button>
-          <Logo />
-          <LangSwitcher />
-        </header>
-        <div style={styles.resultsContainer}>
-          <div style={styles.searchSummary}>
-            <span>{getAirportName(from)} → {getAirportName(to)}</span>
-            <span> · {date} · {passengers} {t.passengerWord(passengers)}</span>
-          </div>
-          <h3 style={styles.resultsTitle}>{t.flightsAvailable(results?.length || 0)}</h3>
-          {results?.map(flight => (
-            <div key={flight.id} style={styles.resultCard} onClick={() => selectFlight(flight)}>
-              <div style={styles.flightRow}>
-                <div style={styles.flightPoint}>
-                  <span style={styles.flightTime}>{flight.dep}</span>
-                  <span style={styles.flightCode}>{flight.from}</span>
-                </div>
-                <div style={styles.flightMiddle}>
-                  <span style={styles.flightDuration}>{formatDuration(flight.durationMin, t)}</span>
-                  <div style={styles.flightLine}><span style={styles.planIcon}>✈</span></div>
-                  <span style={styles.stopsText}>{flight.stops === 0 ? t.direct : t.stop(flight.stops)}</span>
-                </div>
-                <div style={styles.flightPoint}>
-                  <span style={styles.flightTime}>{flight.arr}</span>
-                  <span style={styles.flightCode}>{flight.to}</span>
-                </div>
-                <div style={styles.priceTag}>
-                  <span style={styles.priceNum}>{flight.price * passengers}€</span>
-                  <span style={styles.priceLabel}>{t.select}</span>
-                </div>
-              </div>
-              <div style={styles.airlineSmall}>{flight.airline}</div>
+              <span style={{ background: "#f1f5f9", color: "#475569", padding: "3px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>{a.code}</span>
             </div>
           ))}
         </div>
-      </div>
-    )
-  }
-
-  // HOME PAGE
-  return (
-    <div style={{ ...styles.page, direction: dir }}>
-      <header style={styles.header}>
-        <Logo />
-        <span style={styles.tagline}>{t.tagline}</span>
-        <LangSwitcher />
-      </header>
-
-      <div style={styles.hero}>
-        <h1 style={styles.heroTitle}>{t.heroTitle}</h1>
-        <p style={styles.heroSub}>{t.heroSub}</p>
-      </div>
-
-      <div style={styles.searchBox}>
-        {/* Trip Type */}
-        <div style={styles.tripTypeRow}>
-          <button
-            style={tripType === 'oneWay' ? styles.tripBtnActive : styles.tripBtn}
-            onClick={() => setTripType('oneWay')}
-          >{t.oneWay}</button>
-          <button
-            style={tripType === 'roundTrip' ? styles.tripBtnActive : styles.tripBtn}
-            onClick={() => setTripType('roundTrip')}
-          >{t.roundTrip}</button>
-        </div>
-
-        {/* From / To */}
-        <div style={styles.fromToRow}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.from}</label>
-            <select style={{ ...styles.select, direction: dir }} value={from} onChange={e => setFrom(e.target.value)}>
-              <option value="">{t.selectAirport}</option>
-              {AIRPORTS.map(a => (
-                <option key={a.code} value={a.code}>{a.name[lang]} ({a.code})</option>
-              ))}
-            </select>
-          </div>
-
-          <button style={styles.swapBtn} onClick={swap}>⇄</button>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.to}</label>
-            <select style={{ ...styles.select, direction: dir }} value={to} onChange={e => setTo(e.target.value)}>
-              <option value="">{t.selectAirport}</option>
-              {AIRPORTS.map(a => (
-                <option key={a.code} value={a.code}>{a.name[lang]} ({a.code})</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Date & Passengers */}
-        <div style={styles.dateRow}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.departureDate}</label>
-            <input style={styles.input} type="date" min={today} value={date} onChange={e => setDate(e.target.value)} />
-          </div>
-          {tripType === 'roundTrip' && (
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>{t.returnDate}</label>
-              <input style={styles.input} type="date" min={date || today} value={returnDate} onChange={e => setReturnDate(e.target.value)} />
-            </div>
-          )}
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.passengers}</label>
-            <div style={styles.passengerRow}>
-              <button style={styles.counterBtn} onClick={() => setPassengers(p => Math.max(1, p - 1))}>−</button>
-              <span style={styles.counterNum}>{passengers}</span>
-              <button style={styles.counterBtn} onClick={() => setPassengers(p => Math.min(9, p + 1))}>+</button>
-            </div>
-          </div>
-        </div>
-
-        <button
-          style={!from || !to || !date ? styles.searchBtnDisabled : styles.searchBtn}
-          onClick={search}
-          disabled={!from || !to || !date}
-        >
-          {loading ? t.searching : t.searchBtn}
-        </button>
-      </div>
-
-      {/* Features */}
-      <div style={styles.features}>
-        <div style={styles.feature}><span style={styles.featureIcon}>🌐</span><span>{t.featureSupport}</span></div>
-        <div style={styles.feature}><span style={styles.featureIcon}>✅</span><span>{t.featurePrices}</span></div>
-        <div style={styles.feature}><span style={styles.featureIcon}>⚡</span><span>{t.featureBooking}</span></div>
-      </div>
+      )}
     </div>
-  )
+  );
 }
 
-// ===== COLOR PALETTE =====
-// Primary: deep navy blue  #0D3B66
-// Accent:  warm amber/orange #FAA916
-// Background: cool light gray #F4F6FB
+export default function App() {
+  const [lang, setLang] = useState("es");
+  const [tripType, setTripType] = useState("roundTrip");
+  const [origin, setOrigin] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [depDate, setDepDate] = useState("");
+  const [retDate, setRetDate] = useState("");
+  const [passengers, setPassengers] = useState(1);
+  const [activeTab, setActiveTab] = useState("flights");
+  const t = translations[lang];
+  const isRTL = lang === "ar";
 
-// ===== STYLES =====
-const styles = {
-  page: { minHeight: '100vh', background: '#F4F6FB', fontFamily: "'Segoe UI', Tahoma, Arial, sans-serif", color: '#1a1a2e' },
-  header: { background: '#0D3B66', color: 'white', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  logoWrap: { display: 'flex', alignItems: 'center', gap: 8 },
-  logoIcon: { background: '#FAA916', color: '#0D3B66', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, transform: 'rotate(45deg)' },
-  logo: { fontSize: 20, fontWeight: 'bold', letterSpacing: 0.5 },
-  tagline: { fontSize: 12, opacity: 0.85 },
-  langSwitcher: { display: 'flex', gap: 4 },
-  langBtn: { background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: 'white', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 'bold' },
-  langBtnActive: { background: '#FAA916', border: '1px solid #FAA916', color: '#0D3B66', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 'bold' },
-  backBtn: { background: 'transparent', border: '1px solid rgba(255,255,255,0.4)', color: 'white', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
-  hero: { background: 'linear-gradient(135deg, #0D3B66, #1B6CA8)', color: 'white', padding: '40px 20px', textAlign: 'center' },
-  heroTitle: { fontSize: 30, fontWeight: 'bold', margin: '0 0 8px' },
-  heroSub: { fontSize: 15, opacity: 0.9, margin: 0 },
-  searchBox: { background: 'white', margin: '20px 16px', borderRadius: 16, padding: '20px 16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' },
-  tripTypeRow: { display: 'flex', gap: 8, marginBottom: 16 },
-  tripBtn: { flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: 8, background: 'white', cursor: 'pointer', fontSize: 14, color: '#333' },
-  tripBtnActive: { flex: 1, padding: '8px', border: '2px solid #FAA916', borderRadius: 8, background: '#FFF6E5', cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#0D3B66' },
-  fromToRow: { display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 12 },
-  inputGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
-  label: { fontSize: 12, color: '#666', fontWeight: 'bold' },
-  select: { padding: '10px 8px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14, background: 'white' },
-  input: { padding: '10px 8px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 },
-  swapBtn: { background: '#FFF6E5', border: 'none', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontSize: 18, color: '#0D3B66', marginBottom: 0 },
-  dateRow: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
-  passengerRow: { display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #ddd', borderRadius: 8, padding: '6px 12px' },
-  counterBtn: { background: '#0D3B66', color: 'white', border: 'none', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  counterNum: { fontSize: 16, fontWeight: 'bold', minWidth: 20, textAlign: 'center' },
-  searchBtn: { width: '100%', background: '#FAA916', color: '#0D3B66', border: 'none', borderRadius: 10, padding: '14px', fontSize: 16, fontWeight: 'bold', cursor: 'pointer' },
-  searchBtnDisabled: { width: '100%', background: '#ccc', color: '#777', border: 'none', borderRadius: 10, padding: '14px', fontSize: 16, fontWeight: 'bold', cursor: 'not-allowed' },
-  features: { display: 'flex', justifyContent: 'space-around', padding: '20px 16px' },
-  feature: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontSize: 13, color: '#444', textAlign: 'center' },
-  featureIcon: { fontSize: 24 },
-  resultsContainer: { padding: '16px' },
-  searchSummary: { background: '#0D3B66', color: 'white', padding: '10px 16px', borderRadius: 10, fontSize: 14, marginBottom: 12 },
-  resultsTitle: { margin: '0 0 12px', fontSize: 16, color: '#444' },
-  resultCard: { background: 'white', borderRadius: 12, padding: '16px', marginBottom: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', cursor: 'pointer', border: '1px solid #eee' },
-  flightRow: { display: 'flex', alignItems: 'center', gap: 8 },
-  flightPoint: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 },
-  flightTime: { fontSize: 20, fontWeight: 'bold', color: '#1a1a2e' },
-  flightCode: { fontSize: 13, color: '#666', fontWeight: 'bold' },
-  flightCity: { fontSize: 11, color: '#999' },
-  flightMiddle: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1.5 },
-  flightDuration: { fontSize: 11, color: '#888' },
-  flightLine: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', margin: '4px 0' },
-  planIcon: { fontSize: 16, color: '#0D3B66' },
-  stopsText: { fontSize: 11, color: '#2A9D8F', fontWeight: 'bold' },
-  priceTag: { display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#FFF6E5', borderRadius: 10, padding: '8px 12px' },
-  priceNum: { fontSize: 18, fontWeight: 'bold', color: '#0D3B66' },
-  priceLabel: { fontSize: 11, color: '#0D3B66' },
-  airlineSmall: { fontSize: 12, color: '#888', marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 },
-  airlineRow: { borderTop: '1px solid #f0f0f0', paddingTop: 10, marginTop: 10, fontSize: 13, color: '#666' },
-  bookingContainer: { padding: '16px' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  flightCard: { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' },
-  priceBox: { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' },
-  priceRow: { display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f5f5f5', fontSize: 14 },
-  totalRow: { display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontSize: 16, fontWeight: 'bold' },
-  totalPrice: { color: '#FAA916', fontSize: 20 },
-  infoBox: { background: '#fff8e1', borderRadius: 10, padding: 12, marginBottom: 16 },
-  infoText: { fontSize: 13, color: '#666', margin: 0 },
-  bookBtn: { width: '100%', background: '#25D366', color: 'white', border: 'none', borderRadius: 10, padding: 14, fontSize: 16, fontWeight: 'bold', cursor: 'pointer' },
-  confirmBox: { maxWidth: 400, margin: '60px auto', background: 'white', borderRadius: 20, padding: 32, textAlign: 'center', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' },
-  checkIcon: { width: 60, height: 60, background: '#27ae60', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, margin: '0 auto 16px' },
-  confirmTitle: { fontSize: 22, margin: '0 0 8px' },
-  confirmText: { color: '#666', fontSize: 14, marginBottom: 16 },
-  confirmDetails: { background: '#f8f9ff', borderRadius: 10, padding: 16, marginBottom: 20, fontSize: 14, lineHeight: 2 },
-  whatsappBtn: { width: '100%', background: '#25D366', color: 'white', border: 'none', borderRadius: 10, padding: 14, fontSize: 16, fontWeight: 'bold', cursor: 'pointer' },
-  secondBtn: { width: '100%', background: '#0D3B66', color: 'white', border: 'none', borderRadius: 10, padding: 12, fontSize: 15, cursor: 'pointer' },
+  const swap = () => {
+    const tmp = origin;
+    setOrigin(destination);
+    setDestination(tmp);
+  };
+
+  const handleSearch = () => {
+    if (!origin || !destination || !depDate) return;
+    const marker = "739213";
+    const url = `https://www.kiwi.com/es/search/${origin.code}/${destination.code}/${depDate}${tripType === "roundTrip" && retDate ? `/${retDate}` : ""}?adults=${passengers}&affilid=picky_${marker}`;
+    window.open(url, "_blank");
+  };
+
+  const tabs = [
+    { id: "flights", icon: "✈️", label: t.flights },
+    { id: "hotels", icon: "🏨", label: t.hotels },
+    { id: "cars", icon: "🚗", label: t.cars },
+    { id: "ferries", icon: "🚢", label: t.ferries },
+  ];
+
+  return (
+    <div dir={isRTL ? "rtl" : "ltr"} style={{ minHeight: "100vh", fontFamily: "'Segoe UI', system-ui, sans-serif", background: "#f8fafc" }}>
+
+      {/* HEADER */}
+      <header style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0369a1 100%)", color: "white", paddingBottom: 80 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 20px 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+
+            {/* LOGO */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ background: "linear-gradient(135deg, #f97316, #fb923c)", borderRadius: 10, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>✈️</div>
+              <div>
+                <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>Sky</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316" }}>Deals</span>
+                <span style={{ fontSize: 10, display: "block", color: "#94a3b8", letterSpacing: 2, textTransform: "uppercase", marginTop: -4 }}>skydeals.es</span>
+              </div>
+            </div>
+
+            {/* LANG SWITCHER */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {["es", "en", "ar"].map(l => (
+                <button key={l} onClick={() => setLang(l)}
+                  style={{ padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, background: lang === l ? "#f97316" : "rgba(255,255,255,0.1)", color: "white", transition: "all 0.2s" }}>
+                  {l === "es" ? "ES" : l === "en" ? "EN" : "AR"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* HERO TEXT */}
+          <div style={{ textAlign: "center", padding: "40px 20px 30px" }}>
+            <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 900, margin: "0 0 12px", letterSpacing: -1, lineHeight: 1.1 }}>
+              {t.tagline}
+            </h1>
+            <p style={{ color: "#94a3b8", fontSize: 16, margin: 0 }}>{t.subtitle}</p>
+          </div>
+
+          {/* TABS */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 4, flexWrap: "wrap" }}>
+            {tabs.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{ padding: "10px 20px", borderRadius: 30, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: activeTab === tab.id ? "white" : "rgba(255,255,255,0.1)", color: activeTab === tab.id ? "#0f172a" : "white", transition: "all 0.2s" }}>
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* SEARCH BOX */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
+        <div style={{ background: "white", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,0.12)", padding: "28px", marginTop: -50, position: "relative", zIndex: 10 }}>
+
+          {/* TRIP TYPE */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+            {["oneWay", "roundTrip"].map(type => (
+              <button key={type} onClick={() => setTripType(type)}
+                style={{ padding: "8px 20px", borderRadius: 20, border: `2px solid ${tripType === type ? "#0369a1" : "#e2e8f0"}`, background: tripType === type ? "#eff6ff" : "white", color: tripType === type ? "#0369a1" : "#64748b", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}>
+                {t[type]}
+              </button>
+            ))}
+          </div>
+
+          {/* SEARCH FIELDS */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+
+            <AirportSearch label={t.from} value={origin} onChange={setOrigin} placeholder={t.searchPlaceholder} lang={lang} />
+
+            {/* SWAP */}
+            <button onClick={swap}
+              style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: 38, height: 38, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: 2, transition: "all 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#e2e8f0"}
+              onMouseLeave={e => e.currentTarget.style.background = "#f1f5f9"}>
+              ⇄
+            </button>
+
+            <AirportSearch label={t.to} value={destination} onChange={setDestination} placeholder={t.searchPlaceholder} lang={lang} />
+
+            {/* DATES */}
+            <div style={{ minWidth: 140 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t.departure}</label>
+              <input type="date" value={depDate} onChange={e => setDepDate(e.target.value)} min={new Date().toISOString().split("T")[0]}
+                style={{ width: "100%", border: "2px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "#1e293b", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+            </div>
+
+            {tripType === "roundTrip" && (
+              <div style={{ minWidth: 140 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t.returnDate}</label>
+                <input type="date" value={retDate} onChange={e => setRetDate(e.target.value)} min={depDate || new Date().toISOString().split("T")[0]}
+                  style={{ width: "100%", border: "2px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", fontSize: 14, color: "#1e293b", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+            )}
+
+            {/* PASSENGERS */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t.passengers}</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, border: "2px solid #e2e8f0", borderRadius: 12, padding: "10px 14px" }}>
+                <button onClick={() => setPassengers(Math.max(1, passengers - 1))}
+                  style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>−</button>
+                <span style={{ fontWeight: 700, fontSize: 15, minWidth: 20, textAlign: "center" }}>{passengers}</span>
+                <button onClick={() => setPassengers(Math.min(9, passengers + 1))}
+                  style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>+</button>
+              </div>
+            </div>
+
+            {/* SEARCH BUTTON */}
+            <button onClick={handleSearch}
+              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)", color: "white", border: "none", borderRadius: 14, padding: "14px 32px", fontSize: 15, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(249,115,22,0.4)", transition: "all 0.2s", letterSpacing: 0.3 }}
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
+              🔍 {t.search}
+            </button>
+          </div>
+        </div>
+
+        {/* DEALS SECTION */}
+        <div style={{ marginTop: 60, marginBottom: 40 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>{t.deals} 🔥</h2>
+          <p style={{ color: "#64748b", marginBottom: 28 }}>Precios desde España · Actualizados hoy</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+            {deals.map((deal, i) => {
+              const orig = airports.find(a => a.code === deal.from);
+              const dest = airports.find(a => a.code === deal.to);
+              return (
+                <div key={i}
+                  style={{ background: "white", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.06)", transition: "all 0.2s", cursor: "pointer" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,0,0,0.12)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 20px rgba(0,0,0,0.06)"; }}>
+
+                  <div style={{ background: `linear-gradient(135deg, hsl(${i * 40 + 200}, 70%, 20%), hsl(${i * 40 + 220}, 70%, 35%))`, padding: "20px", color: "white" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 900 }}>{deal.from}</div>
+                        <div style={{ fontSize: 11, opacity: 0.8 }}>{orig?.city}</div>
+                      </div>
+                      <div style={{ textAlign: "center", opacity: 0.7 }}>
+                        <div style={{ fontSize: 18 }}>✈</div>
+                        <div style={{ fontSize: 10 }}>{deal.duration}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 22, fontWeight: 900 }}>{deal.to}</div>
+                        <div style={{ fontSize: 11, opacity: 0.8 }}>{dest?.city}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 2 }}>{deal.airline}</div>
+                      <div style={{ fontSize: 12, color: "#64748b" }}>{t.from2}</div>
+                      <div style={{ fontSize: 26, fontWeight: 900, color: "#0f172a" }}>€{deal.price}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const url = `https://www.kiwi.com/es/search/${deal.from}/${deal.to}?affilid=picky_739213`;
+                        window.open(url, "_blank");
+                      }}
+                      style={{ background: "linear-gradient(135deg, #f97316, #ea580c)", color: "white", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                      {t.book} →
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <footer style={{ borderTop: "1px solid #e2e8f0", padding: "30px 0", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ fontWeight: 700, color: "#475569" }}>Sky</span>
+            <span style={{ fontWeight: 700, color: "#f97316" }}>Deals</span>
+            <span>.es</span>
+          </div>
+          <p style={{ margin: 0 }}>Comparador de vuelos · Los mejores precios garantizados</p>
+        </footer>
+      </div>
+    </div>
+  );
 }
