@@ -51,7 +51,7 @@ function KiwiWidget() {
     if (!container) return;
     container.innerHTML = "";
     const script = document.createElement("script");
-    script.src = "https://tpemd.com/content?currency=eur&trs=539339&shmarker=739213.madrid&powered_by=true&locale=es&campaign_id=111&promo_id=4484";
+    script.src = "https://tpemd.com/content?currency=eur&trs=539339&shmarker=739213.madrid&powered_by=true&locale=es&from_name=madrid_es&campaign_id=111&promo_id=4484";
     script.async = true;
     script.charset = "utf-8";
     container.appendChild(script);
